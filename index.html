@@ -207,8 +207,8 @@ function avatar(name,photo,size){
 }
 
 /* ---------- state ---------- */
-function emptyState(){return {v:1,at:0,sample:false,owner:{name:'Sensei',photo:''},batches:[],students:[],trainers:[],sessions:{},payments:[]}}
-function normalize(o){if(!o.payments)o.payments=[];if(!o.owner)o.owner={name:'Sensei',photo:''};o.trainers.forEach(function(t){if(t.photo==null)t.photo=''});return o}
+function emptyState(){return {v:1,at:0,sample:false,owner:{name:'Sensei',photo:''},sheet:{url:'',token:''},batches:[],students:[],trainers:[],sessions:{},payments:[]}}
+function normalize(o){if(!o.payments)o.payments=[];if(!o.owner)o.owner={name:'Sensei',photo:''};if(!o.sheet)o.sheet={url:'',token:''};o.trainers.forEach(function(t){if(t.photo==null)t.photo=''});return o}
 
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
@@ -503,7 +503,7 @@ function sumHTML(){
     }).join('')+'</div>';
   }
   h+='<button class="btn block" data-a="gotopay">Open trainer pay</button></section>';
-  h+='<section class="sec"><div class="sec-h"><h2>Copy data to Google Sheets</h2><span>Paste in cell A1</span></div><div class="datagrid"><button class="btn" data-a="exportData" data-v="attendance">Attendance rows</button><button class="btn" data-a="exportData" data-v="fees">Fees received</button><button class="btn" data-a="exportData" data-v="trainers">Trainer pay</button><button class="btn" data-a="exportData" data-v="backup">Backup</button></div><button class="btn block" data-a="openRestore">Restore from backup</button></section>';
+  h+='<section class="sec"><div class="sec-h"><h2>Copy data to Google Sheets</h2><span>Paste in cell A1</span></div><div class="datagrid"><button class="btn" data-a="exportData" data-v="attendance">Attendance rows</button><button class="btn" data-a="exportData" data-v="fees">Fees received</button><button class="btn" data-a="exportData" data-v="trainers">Trainer pay</button><button class="btn" data-a="exportData" data-v="backup">Backup</button></div><button class="btn block" data-a="openSync">Sync to Google Sheet</button><button class="btn block" data-a="openRestore">Restore from backup</button></section>';
   return h;
 }
 
@@ -547,31 +547,34 @@ function photoField(name,photo){
 function tsvCell(v){var s=String(v==null?'':v).replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s}
 function toTSV(rows){return rows.map(function(r){return r.map(tsvCell).join('\t')}).join('\n')}
 function whoTook(id){return id==='me'?S.owner.name:(trainerOf(id)?trainerOf(id).name:'Former trainer')}
-function attendanceTSV(){
+function attendanceRows(){
   var rows=[['Date','Village','Student','Present','Taken by']];
   Object.keys(S.sessions).sort().forEach(function(k){
     var p=k.split('|'),s=S.sessions[k],b=batchOf(p[1]);
     if(!b)return;
     studentsOf(b.id).forEach(function(st){rows.push([p[0],b.village,st.name,s.p.indexOf(st.id)>=0?'Yes':'No',whoTook(s.by)])});
   });
-  return toTSV(rows);
+  return rows;
 }
-function feesTSV(){
+function feesRows(){
   var rows=[['Date','Student','Village','Plan','Amount']];
   S.payments.slice().sort(function(a,b){return a.date.localeCompare(b.date)}).forEach(function(p){
     var b=batchOf(p.batchId);rows.push([p.date,p.name,b?b.village:'',PLANS[p.plan]?PLANS[p.plan].label:'',p.amount]);
   });
-  return toTSV(rows);
+  return rows;
 }
-function trainersTSV(){
+function trainersRows(){
   var rows=[['Date','Village','Trainer','Amount','Paid']];
   Object.keys(S.sessions).sort().forEach(function(k){
     var p=k.split('|'),s=S.sessions[k],b=batchOf(p[1]);
     if(s.by==='me')return;
     rows.push([p[0],b?b.village:'',whoTook(s.by),s.pay||0,s.paid?'Yes':'No']);
   });
-  return toTSV(rows);
+  return rows;
 }
+function attendanceTSV(){return toTSV(attendanceRows())}
+function feesTSV(){return toTSV(feesRows())}
+function trainersTSV(){return toTSV(trainersRows())}
 var EXPORTS={
   attendance:['Attendance rows','One row per student per class. Paste into a Google Sheet at cell A1.',attendanceTSV],
   fees:['Fees received','One row per payment. Paste into a Google Sheet at cell A1.',feesTSV],
@@ -582,6 +585,12 @@ function exportSheet(){
   var sh=ui.sheet;
   return '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><h2 id="sheetTitle">'+esc(sh.title)+'</h2><p class="hint">'+esc(sh.help)+'</p><textarea id="f-text" class="ta" readonly rows="8">'+esc(sh.text)+'</textarea><p class="err" id="err" role="alert"></p><div class="actions"><button class="btn primary" data-a="copyText">Copy</button><button class="btn" data-a="closeSheet">Close</button></div></div>';
 }
+function syncSheet(){
+  return '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><h2 id="sheetTitle">Sync to Google Sheet</h2><p class="hint">Paste the web app link and secret word from your sheet’s script. Each sync rewrites the Attendance, Fees, Trainer pay and Summary tabs. It works from the downloaded file or the GitHub link, not inside the Claude preview.</p>'+
+    field('Web app link','f-url',S.sheet.url,'url','placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"')+
+    field('Secret word','f-token',S.sheet.token,'text','autocomplete="off"')+
+    '<p class="err" id="err" role="alert"></p><div class="actions"><button class="btn primary" data-a="doSync">Save and send</button><button class="btn" data-a="closeSheet">Cancel</button></div></div>';
+}
 function restoreSheet(){
   return '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><h2 id="sheetTitle">Restore from backup</h2><p class="hint">Paste a backup copied from this app. It replaces everything in the app now.</p><textarea id="f-text" class="ta" rows="8" placeholder="Paste backup here" aria-label="Backup text"></textarea><p class="err" id="err" role="alert"></p><div class="actions"><button class="btn primary" data-a="doRestore">Restore</button><button class="btn" data-a="closeSheet">Cancel</button></div></div>';
 }
@@ -589,6 +598,7 @@ function sheetHTML(){
   var sh=ui.sheet,h='',k=sh.kind,ed;
   if(k==='export')return exportSheet();
   if(k==='restore')return restoreSheet();
+  if(k==='sync')return syncSheet();
   if(k==='batch'){
     ed=sh.id?batchOf(sh.id):null;
     h='<h2 id="sheetTitle">'+(ed?'Edit batch':'New batch')+'</h2>'+field('Village','f-village',ed?ed.village:'','text','autocomplete="off"')+field('Class time','f-time',ed?ed.time:'18:00','time')+
@@ -677,6 +687,20 @@ var A={
   rmPhoto:function(){ui.sheet.photo='';var p=$('photoPrev');if(p)p.innerHTML=avatar(val('f-name'),'',64)},
   exportData:function(d){var e=EXPORTS[d.v];if(!e)return;ui.sheet={kind:'export',title:e[0],help:e[1],text:e[2]()};renderSheet()},
   openRestore:function(){ui.sheet={kind:'restore'};renderSheet()},
+  openSync:function(){ui.sheet={kind:'sync'};renderSheet()},
+  doSync:function(){
+    var url=val('f-url').trim(),token=val('f-token').trim();
+    if(url.indexOf('https://script.google.com/')!==0)return err('Paste the web app link. It starts with https://script.google.com/');
+    if(!token)return err('Enter the secret word you set in the script.');
+    S.sheet={url:url,token:token};save();
+    var body=JSON.stringify({token:token,attendance:attendanceRows(),fees:feesRows(),trainers:trainersRows()});
+    say('Sending...',true);
+    fetch(url,{method:'POST',mode:'no-cors',body:body}).then(function(){
+      say('Sent. Open your sheet in a few seconds to see the tabs. If nothing changes, check the secret word.',true);
+    },function(){
+      err('This page cannot reach Google here. Open the downloaded file or the GitHub link and try again.');
+    });
+  },
   copyText:function(){
     var t=$('f-text');if(!t)return;
     t.focus();t.select();
