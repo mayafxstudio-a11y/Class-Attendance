@@ -8,7 +8,7 @@ A single-file attendance app for classes held in several villages. Open `index.h
 - **Substitute trainers**: pick who took the class, set the pay, mark it paid
 - **Summary**: monthly attendance, fees received, trainer pay (classes × rate), plans due
 - **Copy to Google Sheets**: attendance, fees and trainer pay as rows to paste at cell A1
-- **Sync to Google Sheet**: one button sends everything to your sheet (setup in `sheet/SETUP.md`, code in `sheet/Code.gs`)
+- **Settings**: connect a Google Sheet (script built in, auto-send after changes), instructors with photos, backup and restore
 
 Data is saved in the browser on the device you use. Use **Summary > Backup** to copy a backup and **Restore from backup** to load it on another device.
 

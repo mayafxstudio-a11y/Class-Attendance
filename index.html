@@ -57,7 +57,7 @@ h1,h2,h3,p{margin:0}
 .stats small{display:block;color:var(--muted);font-size:11px;font-weight:600}
 .stats b{font-size:14px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .tile em{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:2px}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
 .tabs button{border:0;background:none;padding:10px 8px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--muted);min-height:56px}
 .tabs button[aria-current="page"]{color:var(--accent)}
 .tabs svg{width:22px;height:22px}
@@ -155,6 +155,28 @@ table.grid{border-collapse:collapse;width:100%;font-size:13px;font-variant-numer
 .daypick span{display:block;min-width:46px;text-align:center;padding:10px 6px;border:1px solid var(--line);border-radius:10px;font-weight:600;font-size:14px}
 .daypick input:checked+span{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .daypick input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.hero{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.hero>*{background:var(--surface);padding:10px 10px 12px;border:0;text-align:left;min-width:0;display:flex;flex-direction:column;gap:2px}
+.hero small{font-size:11px;font-weight:600;color:var(--muted);line-height:1.2}
+.hero b{font:800 22px/1.1 var(--font-display);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.hero b span{font-size:14px;color:var(--muted)}
+.hero b.hot{color:var(--accent)}
+@media (max-width:380px){.hero{grid-template-columns:1fr 1fr}}
+.steps{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:12px}
+.steps li{display:flex;gap:12px;align-items:flex-start}
+.steps .num{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.steps b{font-weight:700}
+.switch{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;cursor:pointer}
+.switch input{position:absolute;opacity:0;width:1px;height:1px}
+.switch span{width:42px;height:24px;border-radius:99px;background:var(--line);position:relative;flex:none;transition:background .15s}
+.switch span::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgb(0 0 0 / .3);transition:transform .15s}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span::after{transform:translateX(18px)}
+.switch input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.top{border-bottom:3px solid var(--accent)}
+.card,.bcard,.row,.tile{box-shadow:0 1px 2px rgb(0 0 0 / .05)}
+.tabs button[aria-current="page"]{position:relative}
+.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
 .err{color:var(--bad);font-size:13px;font-weight:600;min-height:0}
 .av{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none;display:inline-grid;place-items:center;background:var(--line);overflow:hidden}
 .av.init{background:var(--accent-soft);color:var(--accent);font-weight:800}
@@ -207,8 +229,8 @@ function avatar(name,photo,size){
 }
 
 /* ---------- state ---------- */
-function emptyState(){return {v:1,at:0,sample:false,owner:{name:'Sensei',photo:''},sheet:{url:'',token:''},batches:[],students:[],trainers:[],sessions:{},payments:[]}}
-function normalize(o){if(!o.payments)o.payments=[];if(!o.owner)o.owner={name:'Sensei',photo:''};if(!o.sheet)o.sheet={url:'',token:''};o.trainers.forEach(function(t){if(t.photo==null)t.photo=''});return o}
+function emptyState(){return {v:1,at:0,sample:false,owner:{name:'Sensei',photo:''},sheet:{url:'',token:'',auto:true,last:0},batches:[],students:[],trainers:[],sessions:{},payments:[]}}
+function normalize(o){if(!o.payments)o.payments=[];if(!o.owner)o.owner={name:'Sensei',photo:''};if(!o.sheet)o.sheet={url:'',token:''};if(o.sheet.auto==null)o.sheet.auto=true;if(!o.sheet.last)o.sheet.last=0;if(!o.sheet.token)o.sheet.token=secretWord();o.trainers.forEach(function(t){if(t.photo==null)t.photo=''});return o}
 
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
@@ -256,6 +278,7 @@ var S=loadLocal();
 if(S&&S.sample&&!S.payments)S=null;
 S=normalize(S||emptyState());
 var ui={tab:'classes',batch:null,btab:'students',date:today(),grid:false,month:today().slice(0,7),payMonth:today().slice(0,7),sumMonth:today().slice(0,7),sheet:null,sync:'local'};
+function secretWord(){var w=['dojo','kata','kiai','obi','sensei','gi','kumite','mawashi'];return w[Math.floor(Math.random()*w.length)]+'-'+Math.random().toString(36).slice(2,7)}
 function addPayment(st,date){S.payments.push({id:uid(),studentId:st.id,batchId:st.batchId,name:st.name,plan:st.plan,date:date,amount:st.fee})}
 
 /* ---------- saving ---------- */
@@ -264,7 +287,22 @@ function save(){
   S.at=Date.now();
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
   if(dbDoc){setSync('saving');clearTimeout(saveTimer);saveTimer=setTimeout(pushDb,600)}
+  if(sheetReady()&&S.sheet.auto&&!sendingNow){clearTimeout(sheetTimer);sheetTimer=setTimeout(function(){sendSheet(true)},4000)}
 }
+var sheetTimer=null,sendingNow=false,sheetMsg='';
+function sheetReady(){return S.sheet&&S.sheet.url.indexOf('https://script.google.com/')===0&&!!S.sheet.token}
+function sendSheet(silent){
+  if(!sheetReady())return Promise.resolve(false);
+  var body=JSON.stringify({token:S.sheet.token,attendance:attendanceRows(),fees:feesRows(),trainers:trainersRows()});
+  sheetMsg='Sending to Google Sheet...';if(!silent)paintSheetMsg(true);
+  return fetch(S.sheet.url,{method:'POST',mode:'no-cors',body:body}).then(function(){
+    sendingNow=true;S.sheet.last=Date.now();save();sendingNow=false;
+    sheetMsg='Sent at '+new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})+'. Open the sheet to check.';paintSheetMsg(true);if(ui.tab==='settings'&&!ui.batch&&silent)render();return true;
+  },function(){
+    sheetMsg='Could not reach Google from here. Use the GitHub link or the downloaded file.';paintSheetMsg(false);return false;
+  });
+}
+function paintSheetMsg(ok){var e=$('sheetMsg');if(e){e.textContent=sheetMsg;e.style.color=ok?'var(--ok)':'var(--bad)'}}
 function pushDb(){
   if(!dbDoc)return;
   Promise.resolve(dbDoc.set({json:JSON.stringify(S),at:S.at})).then(function(){setSync('saved')},function(){setSync('local')});
@@ -316,6 +354,7 @@ function dueCount(bid){return studentsOf(bid).filter(function(s){return status(s
 function icon(name){
   if(name==='classes')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
   if(name==='summary')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>';
+  if(name==='settings')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>';
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 5h12M6 9.5h12M9 5c5 0 6 5.5 0 5.5L15 19"/></svg>';
 }
 
@@ -326,7 +365,7 @@ function headerHTML(){
       '<div class="grow"><h1 class="title">'+esc(b.village)+'</h1><div class="subtitle">'+esc(daysText(b))+'</div></div>'+
       '<button class="mini" data-a="editBatch" data-id="'+b.id+'">Edit batch</button></header>';
   }
-  var sub=ui.tab==='pay'?'Substitute trainer pay':ui.tab==='summary'?'Attendance and money':fmt(today(),{weekday:'long',day:'numeric',month:'long'});
+  var sub=ui.tab==='pay'?'Substitute trainer pay':ui.tab==='summary'?'Attendance and money':ui.tab==='settings'?'Google Sheet, instructors, backup':fmt(today(),{weekday:'long',day:'numeric',month:'long'});
   return '<header class="top"><div class="stamp" aria-hidden="true">CA</div><div class="grow"><h1 class="title">Class Attendance</h1><div class="subtitle">'+esc(sub)+'</div></div>'+
     '<div class="sync '+ui.sync+'" id="sync"><i></i><span>'+syncText()+'</span></div></header>';
 }
@@ -338,12 +377,12 @@ function timeText(t){var p=t.split(':').map(Number),h=p[0]%12||12;return h+':'+p
 function navHTML(){
   if(ui.batch)return '';
   function b(id,label){return '<button data-a="tab" data-v="'+id+'"'+(ui.tab===id?' aria-current="page"':'')+'>'+icon(id)+label+'</button>'}
-  return '<nav class="tabs" aria-label="Main">'+b('classes','Classes')+b('summary','Summary')+b('pay','Trainer pay')+'</nav>';
+  return '<nav class="tabs" aria-label="Main">'+b('classes','Classes')+b('summary','Summary')+b('pay','Trainer pay')+b('settings','Settings')+'</nav>';
 }
 
 function bodyHTML(){
   if(ui.batch)return batchHTML(batchOf(ui.batch));
-  return ui.tab==='pay'?payHTML():ui.tab==='summary'?sumHTML():classesHTML();
+  return ui.tab==='pay'?payHTML():ui.tab==='summary'?sumHTML():ui.tab==='settings'?settingsHTML():classesHTML();
 }
 
 /* Classes tab */
@@ -351,6 +390,13 @@ function classesHTML(){
   var t=today(),w=parse(t).getDay(),h='';
   if(S.sample)h+='<div class="banner"><span>Sample data. Replace it with your own batches.</span><button class="mini" data-a="clearSample">Clear sample</button></div>';
   var todays=S.batches.filter(function(b){return b.days.indexOf(w)>=0||sess(b.id,t)});
+  if(S.batches.length){
+    var pres=0,tot=0,done=0,due=S.students.filter(function(s){return status(s).due}).length,owe=0;
+    todays.forEach(function(b){var s=sess(b.id,t);tot+=studentsOf(b.id).length;if(s&&(s.p.length||s.by!=='me')){done++;pres+=s.p.length}});
+    Object.keys(S.sessions).forEach(function(k){var s=S.sessions[k];if(s.by!=='me'&&!s.paid)owe+=+s.pay||0});
+    h+='<div class="hero"><div><small>Present today</small><b>'+pres+'<span>/'+tot+'</span></b></div><div><small>Classes done</small><b>'+done+'<span>/'+todays.length+'</span></b></div><button data-a="tab" data-v="summary"><small>Plans due</small><b class="'+(due?'hot':'')+'">'+due+'</b></button><button data-a="tab" data-v="pay"><small>Owed to trainers</small><b class="'+(owe?'hot':'')+'">'+money(owe)+'</b></button></div>';
+    if(!sheetReady())h+='<div class="banner" style="background:var(--accent-soft);color:var(--accent)"><span>Connect your Google Sheet so every change is saved there too.</span><button class="mini" data-a="tab" data-v="settings">Set up</button></div>';
+  }
   h+='<section class="sec"><div class="sec-h"><h2>Today</h2><span>'+esc(wd(t))+'</span></div>';
   if(!S.batches.length)h+='<div class="empty">Add your first batch to start taking attendance.<br><button class="mini" style="margin-top:10px" data-a="loadSample">Try with sample data</button></div>';
   else if(!todays.length)h+='<p class="empty">No class scheduled today. Open a batch below to take attendance for any day.</p>';
@@ -359,7 +405,6 @@ function classesHTML(){
   h+='<section class="sec"><div class="sec-h"><h2>All batches</h2><span>'+S.batches.length+' villages</span></div>';
   if(S.batches.length)h+='<div class="list">'+S.batches.map(function(b){return batchCard(b,false)}).join('')+'</div>';
   h+='<button class="btn block" data-a="addBatch">+ Add batch</button></section>';
-  h+=instructorsHTML();
   return h;
 }
 function batchCard(b,isToday){
@@ -503,7 +548,31 @@ function sumHTML(){
     }).join('')+'</div>';
   }
   h+='<button class="btn block" data-a="gotopay">Open trainer pay</button></section>';
-  h+='<section class="sec"><div class="sec-h"><h2>Copy data to Google Sheets</h2><span>Paste in cell A1</span></div><div class="datagrid"><button class="btn" data-a="exportData" data-v="attendance">Attendance rows</button><button class="btn" data-a="exportData" data-v="fees">Fees received</button><button class="btn" data-a="exportData" data-v="trainers">Trainer pay</button><button class="btn" data-a="exportData" data-v="backup">Backup</button></div><button class="btn block" data-a="openSync">Sync to Google Sheet</button><button class="btn block" data-a="openRestore">Restore from backup</button></section>';
+  h+='<button class="btn block" data-a="tab" data-v="settings">Google Sheet and backup settings</button>';
+  return h;
+}
+
+/* Settings tab */
+function step(n,title,body){return '<li><span class="num">'+n+'</span><div><b>'+title+'</b><p class="hint">'+body+'</p></div></li>'}
+function settingsHTML(){
+  var c=sheetReady(),h='';
+  h+='<section class="sec"><div class="sec-h"><h2>Google Sheet</h2>'+(c?'<span class="chip ok">Connected</span>':'<span class="chip warn">Not connected</span>')+'</div>';
+  h+='<div class="card"><ol class="steps">'+
+    step(1,'Copy the script','Tap the button. Your secret word is already inside it.')+
+    step(2,'Paste it in your sheet','In Google Sheets open Extensions \u203A Apps Script, delete what is there, paste, and press Save.')+
+    step(3,'Deploy it','Deploy \u203A New deployment \u203A Web app. Execute as Me, access Anyone. Approve, then copy the Web app link.')+
+    step(4,'Paste the link below','Press Connect. The sheet gets Attendance, Fees, Trainer pay and Summary tabs.')+
+    '</ol><button class="btn block" data-a="copyScript">1. Copy the script</button></div>';
+  h+='<div class="card"><div class="stack">'+
+    field('Web app link','f-url',S.sheet.url,'url','placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" inputmode="url"')+
+    field('Secret word (must match the script)','f-token',S.sheet.token,'text','autocomplete="off"')+
+    '<label class="switch"><input type="checkbox" id="f-auto" data-c="auto"'+(S.sheet.auto?' checked':'')+'><span></span>Send to the sheet automatically after every change</label>'+
+    '<div class="actions" style="display:flex;gap:10px"><button class="btn primary" style="flex:1" data-a="connectSheet">'+(c?'Save and send now':'Connect')+'</button>'+(c?'<button class="btn" data-a="disconnectSheet">Disconnect</button>':'')+'</div>'+
+    '<p class="hint" id="sheetMsg" role="status">'+esc(sheetMsg||(S.sheet.last?'Last sent '+new Date(S.sheet.last).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):''))+'</p>'+
+    '</div></div></section>';
+  h+=instructorsHTML();
+  h+='<section class="sec"><div class="sec-h"><h2>Copy and backup</h2><span>Paste rows at cell A1</span></div><div class="datagrid"><button class="btn" data-a="exportData" data-v="attendance">Attendance rows</button><button class="btn" data-a="exportData" data-v="fees">Fees received</button><button class="btn" data-a="exportData" data-v="trainers">Trainer pay</button><button class="btn" data-a="exportData" data-v="backup">Backup</button></div><button class="btn block" data-a="openRestore">Restore from backup</button></section>';
+  h+='<p class="hint" style="text-align:center">Data is saved on this phone. Keep the sheet connected or take a backup now and then.</p>';
   return h;
 }
 
@@ -575,6 +644,7 @@ function trainersRows(){
 function attendanceTSV(){return toTSV(attendanceRows())}
 function feesTSV(){return toTSV(feesRows())}
 function trainersTSV(){return toTSV(trainersRows())}
+var SHEET_SCRIPT="/**\n * Class Attendance: Google Sheet receiver.\n *\n * Setup: see SETUP.md. Paste this into Extensions > Apps Script of your sheet,\n * change SECRET, then Deploy > New deployment > Web app\n * (Execute as: Me, Who has access: Anyone). Copy the web app link into the app.\n *\n * Each sync from the app rewrites these tabs:\n *   Attendance, Fees, Trainer pay, Summary\n */\nconst SECRET = '__SECRET__';\n\nfunction doGet() {\n  return ContentService.createTextOutput('Class Attendance sheet is ready.');\n}\n\nfunction doPost(e) {\n  let d;\n  try {\n    d = JSON.parse(e.postData.contents);\n  } catch (err) {\n    return ContentService.createTextOutput('bad data');\n  }\n  if (d.token !== SECRET) return ContentService.createTextOutput('denied');\n\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  writeTab_(ss, 'Attendance', d.attendance);\n  writeTab_(ss, 'Fees', d.fees);\n  writeTab_(ss, 'Trainer pay', d.trainers);\n  buildSummary_(ss, d);\n  return ContentService.createTextOutput('ok');\n}\n\n/** Clears a tab and writes header + rows. Dates stay as text (yyyy-mm-dd). */\nfunction writeTab_(ss, name, rows) {\n  const sh = ss.getSheetByName(name) || ss.insertSheet(name);\n  sh.clear();\n  if (!rows || !rows.length) return;\n  const width = rows[0].length;\n  sh.getRange(1, 1, rows.length, 1).setNumberFormat('@');\n  const clean = rows.map(function (r) {\n    return r.map(function (v) {\n      return (typeof v === 'string' && /^[=+\\-@]/.test(v)) ? \"'\" + v : v;\n    });\n  });\n  sh.getRange(1, 1, clean.length, width).setValues(clean);\n  sh.getRange(1, 1, 1, width)\n    .setFontWeight('bold').setBackground('#2A2B2F').setFontColor('#FFFFFF');\n  sh.setFrozenRows(1);\n  sh.autoResizeColumns(1, width);\n}\n\n/** Summary tab: type a month like 2026-11 in B1 and everything recalculates. */\nfunction buildSummary_(ss, d) {\n  const sh = ss.getSheetByName('Summary') || ss.insertSheet('Summary');\n  const keepMonth = sh.getRange('B1').getValue();\n  sh.clear();\n  const month = keepMonth ? String(keepMonth) : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM');\n\n  sh.getRange('A1').setValue('Month (yyyy-mm)');\n  sh.getRange('B1').setNumberFormat('@').setValue(month).setBackground('#F4D9D7').setFontWeight('bold');\n\n  const m = '$B$1&\"*\"';\n  const rows = [\n    ['Fees received', '=SUMIFS(Fees!E:E,Fees!A:A,' + m + ')'],\n    ['Trainer pay, total', \"=SUMIFS('Trainer pay'!D:D,'Trainer pay'!A:A,\" + m + ')'],\n    ['Trainer pay, paid', \"=SUMIFS('Trainer pay'!D:D,'Trainer pay'!A:A,\" + m + \",'Trainer pay'!E:E,\\\"Yes\\\")\"],\n    ['Trainer pay, still to pay', '=B4-B5'],\n    ['Left after trainer pay', '=B3-B4'],\n    ['Classes taken by trainers', \"=COUNTIFS('Trainer pay'!A:A,\" + m + ')'],\n    ['Attendance %', '=IFERROR(COUNTIFS(Attendance!A:A,' + m + ',Attendance!D:D,\"Yes\")/COUNTIFS(Attendance!A:A,' + m + '),0)']\n  ];\n  sh.getRange(3, 1, rows.length, 2).setFormulas(rows);\n  sh.getRange('B3:B8').setNumberFormat('#,##0');\n  sh.getRange('B9').setNumberFormat('0%');\n\n  // By village\n  const villages = unique_(d.attendance, 1);\n  let r = 12;\n  sh.getRange(r, 1, 1, 4).setValues([['Village', 'Attendance %', 'Fees received', 'Trainer pay']]);\n  styleHeader_(sh.getRange(r, 1, 1, 4));\n  villages.forEach(function (v, i) {\n    const row = r + 1 + i;\n    sh.getRange(row, 1).setValue(v);\n    sh.getRange(row, 2).setFormula('=IFERROR(COUNTIFS(Attendance!A:A,' + m + ',Attendance!B:B,A' + row + ',Attendance!D:D,\"Yes\")/COUNTIFS(Attendance!A:A,' + m + ',Attendance!B:B,A' + row + '),0)').setNumberFormat('0%');\n    sh.getRange(row, 3).setFormula('=SUMIFS(Fees!E:E,Fees!A:A,' + m + ',Fees!C:C,A' + row + ')').setNumberFormat('#,##0');\n    sh.getRange(row, 4).setFormula(\"=SUMIFS('Trainer pay'!D:D,'Trainer pay'!A:A,\" + m + \",'Trainer pay'!B:B,A\" + row + ')').setNumberFormat('#,##0');\n  });\n\n  // By trainer: classes x rate = total\n  const trainers = unique_(d.trainers, 2);\n  r = r + villages.length + 3;\n  sh.getRange(r, 1, 1, 5).setValues([['Trainer', 'Classes', 'Total', 'Paid', 'To pay']]);\n  styleHeader_(sh.getRange(r, 1, 1, 5));\n  trainers.forEach(function (t, i) {\n    const row = r + 1 + i;\n    sh.getRange(row, 1).setValue(t);\n    sh.getRange(row, 2).setFormula(\"=COUNTIFS('Trainer pay'!A:A,\" + m + \",'Trainer pay'!C:C,A\" + row + ')');\n    sh.getRange(row, 3).setFormula(\"=SUMIFS('Trainer pay'!D:D,'Trainer pay'!A:A,\" + m + \",'Trainer pay'!C:C,A\" + row + ')').setNumberFormat('#,##0');\n    sh.getRange(row, 4).setFormula(\"=SUMIFS('Trainer pay'!D:D,'Trainer pay'!A:A,\" + m + \",'Trainer pay'!C:C,A\" + row + \",'Trainer pay'!E:E,\\\"Yes\\\")\").setNumberFormat('#,##0');\n    sh.getRange(row, 5).setFormula('=C' + row + '-D' + row).setNumberFormat('#,##0');\n  });\n\n  sh.getRange('A3:A9').setFontWeight('bold');\n  sh.setColumnWidth(1, 200);\n  sh.setActiveSheet(sh);\n}\n\nfunction unique_(rows, col) {\n  const seen = {};\n  const out = [];\n  (rows || []).slice(1).forEach(function (r) {\n    const v = r[col];\n    if (v && !seen[v]) { seen[v] = true; out.push(v); }\n  });\n  return out;\n}\n\nfunction styleHeader_(range) {\n  range.setFontWeight('bold').setBackground('#2A2B2F').setFontColor('#FFFFFF');\n}\n";
 var EXPORTS={
   attendance:['Attendance rows','One row per student per class. Paste into a Google Sheet at cell A1.',attendanceTSV],
   fees:['Fees received','One row per payment. Paste into a Google Sheet at cell A1.',feesTSV],
@@ -687,7 +757,21 @@ var A={
   rmPhoto:function(){ui.sheet.photo='';var p=$('photoPrev');if(p)p.innerHTML=avatar(val('f-name'),'',64)},
   exportData:function(d){var e=EXPORTS[d.v];if(!e)return;ui.sheet={kind:'export',title:e[0],help:e[1],text:e[2]()};renderSheet()},
   openRestore:function(){ui.sheet={kind:'restore'};renderSheet()},
-  openSync:function(){ui.sheet={kind:'sync'};renderSheet()},
+  openSync:function(){ui.tab='settings';ui.batch=null;render()},
+  copyScript:function(){
+    var tok=val('f-token').trim()||S.sheet.token;S.sheet.token=tok;save();
+    ui.sheet={kind:'export',title:'Google Sheet script',help:'Copy all of this and paste it into Extensions \u203A Apps Script in your sheet. Secret word: '+tok,text:SHEET_SCRIPT.replace('__SECRET__',tok.replace(/[\\']/g,''))};renderSheet();
+  },
+  connectSheet:function(){
+    var url=val('f-url').trim(),tok=val('f-token').trim();
+    function m(t){sheetMsg=t;paintSheetMsg(false)}
+    if(url.indexOf('https://script.google.com/')!==0)return m('Paste the Web app link. It starts with https://script.google.com/');
+    if(!/\/exec$/.test(url.split('?')[0]))return m('Use the Web app link that ends in /exec, not the editor link.');
+    if(!tok)return m('Enter the secret word that is in your script.');
+    S.sheet.url=url;S.sheet.token=tok.replace(/[\\']/g,'');sendingNow=true;save();sendingNow=false;
+    sendSheet(false).then(function(){render()});
+  },
+  disconnectSheet:function(){S.sheet.url='';sheetMsg='';sendingNow=true;save();sendingNow=false;render()},
   doSync:function(){
     var url=val('f-url').trim(),token=val('f-token').trim();
     if(url.indexOf('https://script.google.com/')!==0)return err('Paste the web app link. It starts with https://script.google.com/');
@@ -767,6 +851,7 @@ var A={
   }
 };
 var C={
+  auto:function(el){S.sheet.auto=el.checked;sendingNow=true;save();sendingNow=false},
   photo:function(el){
     var f=el.files&&el.files[0];if(!f)return;
     if(!/^image\//.test(f.type)){err('Pick an image file.');return}
